@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -16,37 +17,51 @@ namespace Country_test.Controllers
         // GET: Country
 
 
-        //Hosted web API REST Service base url  
-        string Baseurl = "https://restcountries.eu/rest/v2/all";
+        private readonly string Baseurl = "https://restcountries.com/";
+
         public async Task<ActionResult> Index()
         {
             List<Country> name = new List<Country>();
 
-            using (var client = new HttpClient())
+            // Ensure TLS 1.2 or higher is used
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            // Bypass certificate validation (not recommended for production)
+            HttpClientHandler handler = new HttpClientHandler
             {
-                //Passing service base url  
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                // Passing service base URL
                 client.BaseAddress = new Uri(Baseurl);
 
                 client.DefaultRequestHeaders.Clear();
-                //Define request data format  
+                // Define request data format
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
-                HttpResponseMessage Res = await client.GetAsync("https://restcountries.eu/rest/v2/all");
+                // Sending request to find web API REST service resource GetAllEmployees using HttpClient
+                HttpResponseMessage Res = await client.GetAsync("v3.1/all");
 
-                //Checking the response is successful or not which is sent using HttpClient  
+                // Checking if the response is successful
                 if (Res.IsSuccessStatusCode)
                 {
-                    //Storing the response details recieved from web api   
-                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    // Storing the response details received from the web API
+                    var EmpResponse = await Res.Content.ReadAsStringAsync();
 
-                    //Deserializing the response recieved from web api and storing into the Employee list  
+                    // Deserializing the response received from the web API and storing it into the Country list
                     name = JsonConvert.DeserializeObject<List<Country>>(EmpResponse);
-
                 }
-                //returning the employee list to view  
-                return View(name);
+                else
+                {
+                    // Log the response status code for debugging
+                    Console.WriteLine($"Error: {Res.StatusCode}");
+                }
             }
+
+            // Returning the Country list to the view
+            return View(name);
         }
     }
 }
