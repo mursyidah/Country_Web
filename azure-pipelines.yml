@@ -35,9 +35,15 @@ steps:
 - task: CopyFiles@2
   inputs:
     Contents: '**/*'
-    TargetFolder: '$(build.artifactstagingdirectory)'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.ArtifactStagingDirectory)'
+    Contents: '**/*.zip' 
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/publish' 
+
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish'  
     ArtifactName: '.net country'
     publishLocation: 'Container'
